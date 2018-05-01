@@ -15,6 +15,24 @@ def positive_arguments(console_string):
     return argument
 
 
+def check_arguments_input(parser, arguments):
+    entered_parameters = arguments.__dict__
+    entered_parameters_list = entered_parameters.keys()
+    height_parameter = 'height' in entered_parameters_list
+    scale_parameter = 'scale' in entered_parameters_list
+    if not height_parameter and not scale_parameter:
+        parser.error(
+            'At least one argument is required: width, height or scale.'
+        )
+    if height_parameter:
+        if not entered_parameters['height'] \
+                and not entered_parameters['width']:
+            parser.error(
+                'At least one argument is required: width, height or scale.'
+            )
+    return
+
+
 def get_console_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('file_path', help='Enter a path of image file.')
@@ -46,26 +64,13 @@ def get_console_arguments():
         help='Enter scale ratio to resize an image.'
     )
     scale_parser.add_argument(
-        'scale',
+        'scale_ratio',
         type=positive_arguments,
         help='Enter a scale ratio of image resizing.'
     )
 
     args = parser.parse_args()
-    entered_parameters = args.__dict__
-    entered_parameters_list = entered_parameters.keys()
-    height_parameter = 'height' in entered_parameters_list
-    scale_parameter = 'scale' in entered_parameters_list
-    if not height_parameter and not scale_parameter:
-        parser.error(
-            'At least one argument is required: width, height or scale.'
-        )
-    if height_parameter:
-        if not entered_parameters['height'] \
-                and not entered_parameters['width']:
-            parser.error(
-                'At least one argument is required: width, height or scale.'
-            )
+    check_arguments_input(parser, args)
     return args
 
 
