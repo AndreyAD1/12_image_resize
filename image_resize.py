@@ -3,43 +3,28 @@ from PIL import Image
 import os
 
 
-def positive_arguments(console_string):
+def positive_integer_arguments(console_string):
     try:
-        argument = float(console_string)
+        argument = int(console_string)
     except ValueError:
-        raise argparse.ArgumentTypeError(
-            'The argument should be a real number.'
-        )
+        error_message = 'The argument should be an integer.'
+        raise argparse.ArgumentTypeError(error_message)
     if argument <= 0:
         error_message = 'This argument should be bigger than 0.'
         raise argparse.ArgumentTypeError(error_message)
     return argument
 
 
-def get_console_arguments(arguments):
-    input_path = arguments.file_path
-    output_path = arguments.output_path
+def positive_real_arguments(console_string):
     try:
-        width = arguments.width
-    except AttributeError:
-        width = None
-    try:
-        height = arguments.height
-    except AttributeError:
-        height = None
-    try:
-        scale_ratio = arguments.scale_ratio
-    except AttributeError:
-        scale_ratio = None
-    return input_path, output_path, width, height, scale_ratio
-
-
-def check_console_arguments(width_input, height_input):
-    correct_arguments = True
-    if any([width_input, height_input]):
-        if not height_input and not width_input:
-            correct_arguments = False
-    return correct_arguments
+        argument = float(console_string)
+    except ValueError:
+        error_message = 'The argument should be a real number.'
+        raise argparse.ArgumentTypeError(error_message)
+    if argument <= 0:
+        error_message = 'This argument should be bigger than 0.'
+        raise argparse.ArgumentTypeError(error_message)
+    return argument
 
 
 def get_console_arguments_and_parser():
@@ -51,19 +36,18 @@ def get_console_arguments_and_parser():
         help='Enter a path to save the resized file.'
     )
     subparsers = parser.add_subparsers()
-
     width_height_parser = subparsers.add_parser(
         'width_height',
         help='Enter required width and (or) height of image.')
     width_height_parser.add_argument(
         '--height',
-        type=positive_arguments,
+        type=positive_integer_arguments,
         help='Enter an image height.'
     )
     width_height_parser.add_argument(
         '-w',
         '--width',
-        type=positive_arguments,
+        type=positive_integer_arguments,
         help='Enter an image width.'
     )
 
@@ -73,12 +57,29 @@ def get_console_arguments_and_parser():
     )
     scale_parser.add_argument(
         'scale_ratio',
-        type=positive_arguments,
+        type=positive_real_arguments,
         help='Enter a scale ratio of image resizing.'
     )
-
     args = parser.parse_args()
     return args, parser
+
+
+def get_all_script_arguments(arguments_from_console):
+    arguments = ['file_path', 'output_path', 'width', 'height', 'scale_ratio']
+    input_arguments_dict = arguments_from_console.__dict__
+    all_arguments_dict = {}
+    for argument in arguments:
+        try:
+            input_argument_value = input_arguments_dict[argument]
+        except KeyError:
+            input_argument_value = None
+        all_arguments_dict[argument] = input_argument_value
+    file_path = all_arguments_dict['file_path']
+    output_file_path = all_arguments_dict['output_path']
+    width = all_arguments_dict['width']
+    height = all_arguments_dict['height']
+    scale = all_arguments_dict['scale_ratio']
+    return file_path, output_file_path, width, height, scale
 
 
 def get_image(path):
@@ -89,37 +90,32 @@ def get_image(path):
     return image
 
 
-def get_resized_image(image, width, height, scale_ratio):
+def get_new_image_features(image, required_width, required_height, scale_rate):
     image_width = image.size[0]
     image_height = image.size[1]
-    keep_proportions = True
-    if width and height:
-        required_width = int(width)
-        required_height = int(height)
-        keep_proportions = False
-    if width and not height:
-        required_width = int(width)
-        scale_ratio = required_width/image_width
-        required_height = int(image_height * scale_ratio)
-    if not width and height:
-        required_height = int(height)
-        scale_ratio = required_height/image_height
-        required_width = int(image_width * scale_ratio)
-    if scale_ratio:
-        required_width = int(image_width * scale_ratio)
-        required_height = int(image_height * scale_ratio)
-    resized_image = image.resize((required_width, required_height))
-    return resized_image, required_width, required_height, keep_proportions
+    saving_image_proportions = True
+    if required_width and required_height:
+        saving_image_proportions = False
+    if required_width and not required_height:
+        scale_rate = required_width / image_width
+        required_height = int(image_height * scale_rate)
+    if not required_width and required_height:
+        scale_rate = required_height / image_height
+        required_width = int(image_width * scale_rate)
+    if scale_rate:
+        required_width = int(image_width * scale_rate)
+        required_height = int(image_height * scale_rate)
+    return required_width, required_height, saving_image_proportions
 
 
-def get_new_image_path(input_path, new_path, width, height):
+def get_new_image_path(input_image_path, new_path, width, height):
     if new_path:
         directory_path = os.path.dirname(new_path)
     if not new_path:
-        directory_path = os.path.dirname(input_path)
+        directory_path = os.path.dirname(input_image_path)
     if directory_path == '':
         directory_path = os.getcwd()
-    input_image_full_name = os.path.basename(input_path)
+    input_image_full_name = os.path.basename(input_image_path)
     input_image_name = os.path.splitext(input_image_full_name)[0]
     input_image_extension = os.path.splitext(input_image_full_name)[1]
     new_image_name = '{}__{}x{}{}'.format(
@@ -140,23 +136,23 @@ def print_script_result(image_path, preserve_proportions):
 
 if __name__ == '__main__':
     console_arguments, argument_parser = get_console_arguments_and_parser()
-    source_picture_path, new_picture_path, width_arg, height_arg, scale_arg =\
-        get_console_arguments(console_arguments)
-    proper_arguments = check_console_arguments(width_arg, height_arg)
-    if proper_arguments is False:
+    input_path, output_path, width_arg, height_arg, scale_arg =\
+        get_all_script_arguments(console_arguments)
+    if not width_arg and not height_arg and not scale_arg:
         argument_parser.error(
             'At least one argument is required: width, height or scale.'
         )
-    picture = get_image(source_picture_path)
+    picture = get_image(input_path)
     if not picture:
         exit('Can not open the given file.')
-    new_picture, new_width, new_height, the_same_proportions = \
-        get_resized_image(picture, width_arg, height_arg, scale_arg)
-    new_picture_path = get_new_image_path(
-        source_picture_path,
-        new_picture_path,
+    new_width, new_height, proportion_conservation = \
+        get_new_image_features(picture, width_arg, height_arg, scale_arg)
+    new_picture = picture.resize((new_width, new_height))
+    output_path = get_new_image_path(
+        input_path,
+        output_path,
         new_width,
         new_height
     )
-    new_picture.save(new_picture_path)
-    print_script_result(new_picture_path, the_same_proportions)
+    new_picture.save(output_path)
+    print_script_result(output_path, proportion_conservation)
