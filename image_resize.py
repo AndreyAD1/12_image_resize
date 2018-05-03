@@ -118,11 +118,11 @@ def get_new_image_path(input_image_path, new_path, width, height):
     if directory_path == '':
         directory_path = os.getcwd()
     input_image_full_name = os.path.basename(input_image_path)
-    input_image_name_and_exension = os.path.splitext(input_image_full_name)
+    input_image_name_and_extension = os.path.splitext(input_image_full_name)
     name_index = 0
     extension_index = 1
-    input_image_name = input_image_name_and_exension[name_index]
-    input_image_extension = input_image_name_and_exension[extension_index]
+    input_image_name = input_image_name_and_extension[name_index]
+    input_image_extension = input_image_name_and_extension[extension_index]
     new_image_name = '{}__{}x{}{}'.format(
         input_image_name,
         width,
