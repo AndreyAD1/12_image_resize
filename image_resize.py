@@ -91,8 +91,10 @@ def get_image(path):
 
 
 def get_new_image_features(image, required_width, required_height, scale_rate):
-    image_width = image.size[0]
-    image_height = image.size[1]
+    width_index = 0
+    height_index = 1
+    image_width = image.size[width_index]
+    image_height = image.size[height_index]
     saving_image_proportions = True
     if required_width and required_height:
         saving_image_proportions = False
@@ -116,8 +118,11 @@ def get_new_image_path(input_image_path, new_path, width, height):
     if directory_path == '':
         directory_path = os.getcwd()
     input_image_full_name = os.path.basename(input_image_path)
-    input_image_name = os.path.splitext(input_image_full_name)[0]
-    input_image_extension = os.path.splitext(input_image_full_name)[1]
+    input_image_name_and_exension = os.path.splitext(input_image_full_name)
+    name_index = 0
+    extension_index = 1
+    input_image_name = input_image_name_and_exension[name_index]
+    input_image_extension = input_image_name_and_exension[extension_index]
     new_image_name = '{}__{}x{}{}'.format(
         input_image_name,
         width,
