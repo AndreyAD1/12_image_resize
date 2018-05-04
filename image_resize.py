@@ -64,21 +64,20 @@ def get_console_arguments_and_parser():
     return args, parser
 
 
-def get_all_script_arguments(arguments_from_console):
-    arguments = ['file_path', 'output_path', 'width', 'height', 'scale_ratio']
-    input_arguments_dict = arguments_from_console.__dict__
-    all_arguments_dict = {}
-    for argument in arguments:
-        try:
-            input_argument_value = input_arguments_dict[argument]
-        except KeyError:
-            input_argument_value = None
-        all_arguments_dict[argument] = input_argument_value
-    file_path = all_arguments_dict['file_path']
-    output_file_path = all_arguments_dict['output_path']
-    width = all_arguments_dict['width']
-    height = all_arguments_dict['height']
-    scale = all_arguments_dict['scale_ratio']
+def get_all_script_arguments(arguments):
+    print(arguments)
+    file_path = arguments.file_path
+    output_file_path = arguments.output_path
+    try:
+        width = arguments.width
+        height = arguments.height
+    except AttributeError:
+        width = None
+        height = None
+    try:
+        scale = arguments.scale_ratio
+    except AttributeError:
+        scale = None
     return file_path, output_file_path, width, height, scale
 
 
