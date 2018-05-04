@@ -32,8 +32,8 @@ def get_console_arguments_and_parser():
     parser.add_argument('file_path', help='Enter a path of image file.')
     parser.add_argument(
         '-o',
-        '--output_path',
-        help='Enter a path to save the resized file.'
+        '--output_directory',
+        help='Enter a directory path to save the resized file.'
     )
     subparsers = parser.add_subparsers()
     width_height_parser = subparsers.add_parser(
@@ -65,58 +65,52 @@ def get_console_arguments_and_parser():
 
 
 def get_all_script_arguments(arguments):
-    print(arguments)
     file_path = arguments.file_path
-    output_file_path = arguments.output_path
+    output_directory_path = arguments.output_directory
     try:
-        width = arguments.width
-        height = arguments.height
+        width_arg = arguments.width
+        height_arg = arguments.height
     except AttributeError:
-        width = None
-        height = None
+        width_arg = None
+        height_arg = None
     try:
-        scale = arguments.scale_ratio
+        scale_arg = arguments.scale_ratio
     except AttributeError:
-        scale = None
-    return file_path, output_file_path, width, height, scale
+        scale_arg = None
+    return file_path, output_directory_path, width_arg, height_arg, scale_arg
 
 
 def get_image(path):
     try:
-        image = Image.open(path)
+        input_image = Image.open(path)
+        return input_image
     except IOError:
         return None
-    return image
 
 
-def get_new_image_features(image, required_width, required_height, scale_rate):
-    width_index = 0
-    height_index = 1
-    image_width = image.size[width_index]
-    image_height = image.size[height_index]
-    saving_image_proportions = True
-    if required_width and required_height:
-        saving_image_proportions = False
+def get_new_image_size(img, required_width, required_height, scale_ratio):
+    image_width = img.width
+    image_height = img.height
     if required_width and not required_height:
         scale_rate = required_width / image_width
         required_height = int(image_height * scale_rate)
     if not required_width and required_height:
         scale_rate = required_height / image_height
         required_width = int(image_width * scale_rate)
-    if scale_rate:
-        required_width = int(image_width * scale_rate)
-        required_height = int(image_height * scale_rate)
-    return required_width, required_height, saving_image_proportions
+    if scale_ratio:
+        required_width = int(image_width * scale_ratio)
+        required_height = int(image_height * scale_ratio)
+    return required_width, required_height
 
 
-def get_new_image_path(input_image_path, new_path, width, height):
-    if new_path:
-        directory_path = os.path.dirname(new_path)
-    if not new_path:
-        directory_path = os.path.dirname(input_image_path)
+def get_new_image_path(input_img_path, new_directory, img_width, img_height):
+    if new_directory:
+        directory_path = os.path.dirname(new_directory)
+    if not new_directory:
+        directory_path = os.path.dirname(input_img_path)
     if directory_path == '':
         directory_path = os.getcwd()
-    input_image_full_name = os.path.basename(input_image_path)
+    input_image_full_name = os.path.basename(input_img_path)
     input_image_name_and_extension = os.path.splitext(input_image_full_name)
     name_index = 0
     extension_index = 1
@@ -124,12 +118,23 @@ def get_new_image_path(input_image_path, new_path, width, height):
     input_image_extension = input_image_name_and_extension[extension_index]
     new_image_name = '{}__{}x{}{}'.format(
         input_image_name,
-        width,
-        height,
+        img_width,
+        img_height,
         input_image_extension
     )
     new_image_path = os.path.join(directory_path, new_image_name)
     return new_image_path
+
+
+def check_proportion_conservation(old_img, new_img):
+    saving_proportions = False
+    old_image_proportion = old_img.width / old_img.height
+    new_image_proportion = new_img.width / new_img.height
+    proportion_difference = old_image_proportion - new_image_proportion
+    small_proportion_difference = 0.01
+    if abs(proportion_difference) < small_proportion_difference:
+        saving_proportions = True
+    return saving_proportions
 
 
 def print_script_result(image_path, preserve_proportions):
@@ -140,23 +145,24 @@ def print_script_result(image_path, preserve_proportions):
 
 if __name__ == '__main__':
     console_arguments, argument_parser = get_console_arguments_and_parser()
-    input_path, output_path, width_arg, height_arg, scale_arg =\
-        get_all_script_arguments(console_arguments)
-    if not width_arg and not height_arg and not scale_arg:
+    input_path, output_dir, width, height, scale = get_all_script_arguments(
+        console_arguments
+    )
+    if not width and not height and not scale:
         argument_parser.error(
             'At least one argument is required: width, height or scale.'
         )
-    picture = get_image(input_path)
-    if not picture:
+    image = get_image(input_path)
+    if not image:
         exit('Can not open the given file.')
-    new_width, new_height, proportion_conservation = \
-        get_new_image_features(picture, width_arg, height_arg, scale_arg)
-    new_picture = picture.resize((new_width, new_height))
-    output_path = get_new_image_path(
+    new_width, new_height = get_new_image_size(image, width, height, scale)
+    new_image = image.resize((new_width, new_height))
+    proportion_conservation = check_proportion_conservation(image, new_image)
+    output_file_path = get_new_image_path(
         input_path,
-        output_path,
+        output_dir,
         new_width,
         new_height
     )
-    new_picture.save(output_path)
-    print_script_result(output_path, proportion_conservation)
+    new_image.save(output_file_path)
+    print_script_result(output_file_path, proportion_conservation)
