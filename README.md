@@ -19,7 +19,7 @@ for better isolation.
 # Quick Start
 
 An image file path is the positional argument of the script.
-An output image path is the optional argument. 
+An output directory path is the optional argument. 
 By default the output image is saved in the directory of input image.
 
 Moreover, user should set at least one of these arguments: 
@@ -29,7 +29,7 @@ Moreover, user should set at least one of these arguments:
 
 To run script on Linux:
 ```bash
-$ python image_resize.py /home/image.jpg --output_path /home/img width_height --width 500 --height 400
+$ python image_resize.py /home/image.jpg --output_directory /home/img width_height --width 500 --height 400
 The path of edited image: /home/img/image__500x400.jpg
 ```
  Windows usage is the same.
