@@ -108,33 +108,26 @@ def get_new_image_path(input_img_path, new_directory, img_width, img_height):
         directory_path = os.path.dirname(new_directory)
     if not new_directory:
         directory_path = os.path.dirname(input_img_path)
-    if directory_path == '':
+    if not directory_path:
         directory_path = os.getcwd()
     input_image_full_name = os.path.basename(input_img_path)
-    input_image_name_and_extension = os.path.splitext(input_image_full_name)
-    name_index = 0
-    extension_index = 1
-    input_image_name = input_image_name_and_extension[name_index]
-    input_image_extension = input_image_name_and_extension[extension_index]
+    image_name, image_extension = os.path.splitext(input_image_full_name)
     new_image_name = '{}__{}x{}{}'.format(
-        input_image_name,
+        image_name,
         img_width,
         img_height,
-        input_image_extension
+        image_extension
     )
     new_image_path = os.path.join(directory_path, new_image_name)
     return new_image_path
 
 
 def check_proportion_conservation(old_img, new_img):
-    saving_proportions = False
     old_image_proportion = old_img.width / old_img.height
     new_image_proportion = new_img.width / new_img.height
     proportion_difference = old_image_proportion - new_image_proportion
     small_proportion_difference = 0.01
-    if abs(proportion_difference) < small_proportion_difference:
-        saving_proportions = True
-    return saving_proportions
+    return abs(proportion_difference) < small_proportion_difference
 
 
 def print_script_result(image_path, preserve_proportions):
